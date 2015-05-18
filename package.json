@@ -1,5 +1,6 @@
 {
   "name": "hubot-typeform",
+  "version": "0.0.1",
   "description": "create a survey and notice user to take the survey from hubot",
   "homepage": "https://github.com/hubot-typeform/hubot-typeform",
   "main": "index.coffee",
