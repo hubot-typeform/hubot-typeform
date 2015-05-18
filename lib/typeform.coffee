@@ -26,7 +26,7 @@ users = {}
 TYPEFORM_URL ="https://api.typeform.io/v0.1/forms/"
 PASTE_URL = "https://paste.dev-jpe1.rakuten.rpaas.net/"
 
-API_KEY = prcess.env.HUBOT_TYPEFORM_KEY
+API_KEY = process.env.HUBOT_TYPEFORM_KEY
 
 _ = require("underscore")
 request = require("request")
@@ -41,7 +41,7 @@ module.exports = (robot) ->
   # fetch our survey data when the script is loaded
   checkConfig console.log
 
-  robot.respond /tyepform create (.*)/i, (msg) ->
+  robot.respond /typeform create (.*)/i, (msg) ->
     checkConfig msg.send
     survey_link = msg.match[1]
 
