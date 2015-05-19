@@ -25,6 +25,7 @@ users = {}
 
 TYPEFORM_URL ="https://api.typeform.io/v0.1/forms"
 PASTE_URL = "https://paste.dev-jpe1.rakuten.rpaas.net/raw"
+STATISTICS_URL = "http://128.199.175.201/api/hubot/"
 
 API_KEY = process.env.HUBOT_TYPEFORM_KEY
 
@@ -48,6 +49,7 @@ module.exports = (robot) ->
 
   robot.respond /typeform create(.*)/i, (msg) ->
     checkConfig msg
+    msg.reply "Typeform creation ..."
     survey_link = msg.match[1]
     user = msg.message.user
     if survey_link.length == 0
@@ -85,35 +87,55 @@ module.exports = (robot) ->
 
       msg.reply "Correct. I will create a new survey for you."
 
+      # Add webhook submit url field
+      survey['webhook_submit_url'] = STATISTICS_URL
+
       # create a typeform
       create_typeform survey, (data) ->
 
-        # TODO analyze data details   webhook
+        console.log(data)
         typeform_link = data.links.form_render.get
+        statistics_link = data.webhook_submit_url
 
         # Save into hubot brain
         formlist = jsonlint.parse(robot.brain.data[BRAIN_TYPEFORM_KEY])
 
-        # TODO change title to user.name
-        formlist[user.name] = typeform_link
+        formlist[user.name] = {
+          "typeform_link": typeform_link,
+          "statistics_link": statistics_link
+        }
         robot.brain.data[BRAIN_TYPEFORM_KEY] = JSON.stringify(formlist)
 
-        msg.reply "Ok. Survey creation finished. You can access it through : #{typeform_link}"
+        msg.reply "Ok. Survey creation finished."
+        msg.reply "To see typeform preview. Please click : #{typeform_link}"
+        msg.reply "To see survey statistics. Please click : #{statistics_link}"
 
   robot.respond /typeform preview/i, (msg) ->
 
     checkConfig msg
-    msg.reply "Command : typeform preview"
+    msg.reply "Typeform previewing ..."
     user = msg.message.user
     # Get from hubot brain
     typeforms = jsonlint.parse(robot.brain.data[BRAIN_TYPEFORM_KEY])
     if typeforms[user.name]
-      msg.reply "Please copy this link : #{typeforms[user.name]}"
+      msg.reply "Please copy this link : #{typeforms[user.name]["typeform_link"]}"
     else
       msg.reply "Nope. Please create your own typeform."
+      msg.reply "Usage : create\t<survey_link>\tCreate your own typeform"
+
+  robot.respond /typeform watch/i, (msg) ->
+    checkConfig msg
+    msg.reply "Typeform watching ..."
+    user = msg.message.user
+    # Get from hubot brain
+    typeforms = jsonlint.parse(robot.brain.data[BRAIN_TYPEFORM_KEY])
+    if typeforms[user.name]
+      msg.reply "Please copy this link to watch current statistics : #{typeforms[user.name]["statistics_link"]}"
+    else
+      msg.reply "Nope. Please create your own typeform."
+      msg.reply "Usage : create\t<survey_link>\tCreate your own typeform"
 
   robot.respond /typeform publish(.*)/i, (msg) ->
-
 
     checkConfig msg
     user = msg.message.user
@@ -122,9 +144,10 @@ module.exports = (robot) ->
 
     if not user.name of forms
       msg.reply "Nope. Please create your own typeform."
+      msg.reply "Usage : create\t<survey_link>\tCreate your own typeform"
       return
 
-    form_link = forms[user.name]
+    form_link = forms[user.name]['typeform_link']
 
     users_link = msg.match[1]
 
