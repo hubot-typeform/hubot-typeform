@@ -93,10 +93,9 @@ module.exports = (robot) ->
 
   robot.hear /^(?:\/tf|typeform) ?([^ ]+ ?[^ ]*)?/i, (msg) ->
     checkConfig msg
+    match_string = 'help'
 
-    if msg.match.length < 2
-      match_string = 'help'
-    else
+    if undefined != msg.match[1]
       match_string = msg.match[1]
 
     command_opts = match_string.split(' ')
@@ -140,6 +139,11 @@ module.exports = (robot) ->
       msg.send "You must provide a survey link."
       msg.send "If you do not know how to make one."
       msg.send "Please refer #{PASTE_URL}/mumihocima.json for example."
+      return
+
+    if not validateURL survey_link
+      msg.send "Command : typeform create <surveylink>."
+      msg.send "<surveylink> should be a valide URL"
       return
 
     # TODO Check if user_link
@@ -205,6 +209,11 @@ module.exports = (robot) ->
       msg.send "Please refer #{PASTE_URL}/seqiqikeje.avrasm for example."
       return
 
+    if not validateURL users_link
+      msg.send "Command : typeform publish <userslink>."
+      msg.send "<userslink> should be a valide URL"
+      return
+
     msg.reply "Analynizing user list..."
 
     # Handle survey data
@@ -247,3 +256,8 @@ module.exports = (robot) ->
     else
       msg.reply "Nope. Please create your own typeform."
       msg.reply "Usage : create\t<survey_link>\tCreate your own typeform"
+
+
+validateURL = (textval) ->
+  urlregex = new RegExp('^(http|https|ftp)://([a-zA-Z0-9.-]+(:[a-zA-Z0-9.&amp;%$-]+)*@)*((25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[1-9]).(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[1-9]|0).(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[1-9]|0).(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[0-9])|([a-zA-Z0-9-]+.)*[a-zA-Z0-9-]+.(com|edu|gov|int|mil|net|org|biz|arpa|info|name|pro|aero|coop|museum|[a-zA-Z]{2}))(:[0-9]+)*(/($|[a-zA-Z0-9.,?\'\\+&amp;%$#=~_-]+))*$')
+  urlregex.test textval
