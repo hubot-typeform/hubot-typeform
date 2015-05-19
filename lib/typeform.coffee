@@ -152,8 +152,7 @@ module.exports = (robot) ->
             if error != null
               msg.reply "Get error #{error}"
             else
-              msg.reply "Hi, #{user.name} create a survey for you #{jid} #{form_link}"
-#              robot.messageRoom jid, "Hi, #{user.name} create a survey for you #{form_link}"
+              robot.messageRoom jid, "Hi, #{user.name} create a survey for you #{form_link}"
 
   robot.respond /typeform( help)?$/i, (msg) ->
     checkConfig msg
