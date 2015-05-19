@@ -242,3 +242,9 @@ module.exports = (robot) ->
     msg.send "publish\t<user_link>\tPublish your typeform to users"
     msg.send "\n"
     return
+  create = (msg) ->
+    return
+  public = (msg) ->
+    return
+  preview = (msg) ->
+    return
