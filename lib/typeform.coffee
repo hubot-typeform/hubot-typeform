@@ -100,8 +100,7 @@ module.exports = (robot) ->
 
         msg.reply "Ok. Survey creation finished. You can access it through : #{typeform_link}"
 
-
-  robot.respond /typeform preivew/i, (msg) ->
+  robot.respond /typeform preview/i, (msg) ->
 
     checkConfig msg
     msg.reply "Command : typeform preview"
@@ -145,6 +144,7 @@ module.exports = (robot) ->
       users = data.split('\n')
 
       msg.reply "Correct. I will publish the survey for you."
+
       for user_email in users
         do (user_email) ->
           msg.reply "Notifying #{user_email}"
