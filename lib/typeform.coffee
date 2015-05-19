@@ -23,6 +23,13 @@
 survey = {}
 users = {}
 
+command_map =
+  'h': 'help'
+  'c': 'create'
+  'pub': 'public'
+  'pre': 'preview'
+  'w': 'watch'
+
 TYPEFORM_URL ="https://api.typeform.io/v0.1/forms"
 PASTE_URL = "https://paste.dev-jpe1.rakuten.rpaas.net/raw"
 
@@ -204,3 +211,21 @@ module.exports = (robot) ->
   get_ex = (link, callback) ->
     request link, (error, response, body) ->
       callback error, body
+
+  robot.hear /typeform( [^ ]*)?/i, (msg) ->
+    checkConfig msg
+
+    command_map
+
+
+    command = msg.match[1]
+    if command == undefined
+      command = 'help'
+    command = command.trim()
+
+    for short_cut of command_map
+      if command == short_cut
+        command = command_map[short_cut]
+        break
+
+    msg.send command
