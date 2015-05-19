@@ -30,6 +30,9 @@ API_KEY = process.env.HUBOT_TYPEFORM_KEY
 
 BRAIN_TYPEFORM_KEY = "typeform"
 
+HIPCHAT_API = "https://api.hipchat.com/v2"
+HIPCHAT_TOKEN = "roHqrGYG0klkFIqkOoAGZNlcxU2La8OACB4vIc08"
+
 _ = require("underscore")
 request = require("request")
 jsonlint = require("jsonlint")
@@ -46,7 +49,7 @@ module.exports = (robot) ->
   robot.respond /typeform create(.*)/i, (msg) ->
     checkConfig msg
     survey_link = msg.match[1]
-
+    user = msg.message.user
     if survey_link.length == 0
       msg.send "Command : typeform create <surveylink>."
       msg.send "You must provide a survey link."
@@ -56,7 +59,7 @@ module.exports = (robot) ->
 
     # TODO Check if user_link
 
-    # Handle survey link 
+    # Handle survey link
     # Maybe a full link, maybe a short name
     # For example
     # Correct : https://paste.dev-jpe1.rakuten.rpaas.net/raw/mumihocima.json
@@ -92,26 +95,38 @@ module.exports = (robot) ->
         formlist = jsonlint.parse(robot.brain.data[BRAIN_TYPEFORM_KEY])
 
         # TODO change title to user.name
-        formlist[data.title] = typeform_link
+        formlist[user.name] = typeform_link
         robot.brain.data[BRAIN_TYPEFORM_KEY] = JSON.stringify(formlist)
 
         msg.reply "Ok. Survey creation finished. You can access it through : #{typeform_link}"
 
 
   robot.respond /typeform preivew/i, (msg) ->
-      
+
     checkConfig msg
     msg.reply "Command : typeform preview"
-
+    user = msg.message.user
     # Get from hubot brain
     typeforms = jsonlint.parse(robot.brain.data[BRAIN_TYPEFORM_KEY])
-     if typeforms[user.name]
-       msg.reply "Please copy this link : #{typeforms[key]}"
-     else
-       msg.reply "Nope. Please create your own typeform."
+    if typeforms[user.name]
+      msg.reply "Please copy this link : #{typeforms[user.name]}"
+    else
+      msg.reply "Nope. Please create your own typeform."
 
   robot.respond /typeform publish(.*)/i, (msg) ->
+
+
     checkConfig msg
+    user = msg.message.user
+    # TODO if has unpublished form
+    forms = jsonlint.parse(robot.brain.data[BRAIN_TYPEFORM_KEY])
+
+    if not user.name of forms
+      msg.reply "Nope. Please create your own typeform."
+      return
+
+    form_link = forms[user.name]
+
     users_link = msg.match[1]
 
     if users_link.length == 0
@@ -130,31 +145,50 @@ module.exports = (robot) ->
       users = data.split('\n')
 
       msg.reply "Correct. I will publish the survey for you."
+      for user_email in users
+        do (user_email) ->
+          msg.reply "Notifying #{user_email}"
+          get_jid_of_hipchat_user user_email, (error, jid) ->
+            if error != null
+              msg.reply "Get error #{error}"
+            else
+              msg.reply "Hi, #{user.name} create a survey for you #{jid} #{form_link}"
+#              robot.messageRoom jid, "Hi, #{user.name} create a survey for you #{form_link}"
 
-      # create rooms for users to take the survey
-      # TODO
-       
+  get_jid_of_hipchat_user = (rakuten_email, callback) ->
+    get_ex "#{HIPCHAT_API}/user/#{rakuten_email}?auth_token=#{HIPCHAT_TOKEN}", (error, result) ->
+      res_obj = jsonlint.parse(result)
+      if error == null
+        callback null, res_obj.xmpp_jid
+      else
+        callback error
 
-get_users = (link, callback) ->
-  get link, callback
 
-get_survey = (link, callback) ->
-  get link, callback
+  get_users = (link, callback) ->
+    get link, callback
 
-create_typeform = (data, callback) ->
-  link = TYPEFORM_URL
-  ops = {
-    json: data,
-    headers: 'X-API-TOKEN': API_KEY
-  }
-  post link, ops, callback
+  get_survey = (link, callback) ->
+    get link, callback
 
-# http get
-get = (link, callback) ->
-  request link, (error, response, body) ->
-    callback(body)
+  create_typeform = (data, callback) ->
+    link = TYPEFORM_URL
+    ops = {
+      json: data,
+      headers: 'X-API-TOKEN': API_KEY
+    }
+    post link, ops, callback
 
-# http post
-post = (link, ops, callback) ->
-  request.post link, ops, (error, response, body) ->
-    callback(body)
+  # http get
+  get = (link, callback) ->
+    request link, (error, response, body) ->
+      callback(body)
+
+  # http post
+  post = (link, ops, callback) ->
+    request.post link, ops, (error, response, body) ->
+      callback(body)
+
+  # http get
+  get_ex = (link, callback) ->
+    request link, (error, response, body) ->
+      callback error, body
