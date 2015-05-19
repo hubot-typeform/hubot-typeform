@@ -54,7 +54,7 @@ module.exports = (robot) ->
       msg.send "Command : typeform create <surveylink>."
       msg.send "You must provide a survey link."
       msg.send "If you do not know how to make one."
-      msg.send "Please refer #{PASTE_URL}/raw/mumihocima.json for example."
+      msg.send "Please refer #{PASTE_URL}/mumihocima.json for example."
       return
 
     # TODO Check if user_link
@@ -67,7 +67,7 @@ module.exports = (robot) ->
     # Need to change : mumihocima.json
     #handle_survey_link
 
-    msg.reply "Analynizing survey data..."
+    msg.reply "Analyzing survey data..."
 
     # Handle survey data
     get_survey survey_link, (data) ->
@@ -131,7 +131,7 @@ module.exports = (robot) ->
     if users_link.length == 0
       msg.send "Command : typeform publish <userslink>."
       msg.send "You must provide a user list."
-      msg.send "Please refer #{PASTE_URL}/raw/seqiqikeje.avrasm for example."
+      msg.send "Please refer #{PASTE_URL}/seqiqikeje.avrasm for example."
       return
 
     msg.reply "Analynizing user list..."
