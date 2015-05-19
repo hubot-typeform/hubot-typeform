@@ -54,12 +54,88 @@ module.exports = (robot) ->
 
   robot.brain.data[BRAIN_TYPEFORM_KEY] = "{}"
 
-  robot.respond /typeform create(.*)/i, (msg) ->
+  get_jid_of_hipchat_user = (rakuten_email, callback) ->
+    get_ex "#{HIPCHAT_API}/user/#{rakuten_email}?auth_token=#{HIPCHAT_TOKEN}", (error, result) ->
+      res_obj = jsonlint.parse(result)
+      if error == null
+        callback null, res_obj.xmpp_jid
+      else
+        callback error
+
+  get_users = (link, callback) ->
+    get link, callback
+
+  get_survey = (link, callback) ->
+    get link, callback
+
+  create_typeform = (data, callback) ->
+    link = TYPEFORM_URL
+    ops = {
+      json: data,
+      headers: 'X-API-TOKEN': API_KEY
+    }
+    post link, ops, callback
+
+  # http get
+  get = (link, callback) ->
+    request link, (error, response, body) ->
+      callback(body)
+
+  # http post
+  post = (link, ops, callback) ->
+    request.post link, ops, (error, response, body) ->
+      callback(body)
+
+  # http get
+  get_ex = (link, callback) ->
+    request link, (error, response, body) ->
+      callback error, body
+
+  robot.hear /^(?:\/tf|typeform) ?([^ ]+ ?[^ ]*)?/i, (msg) ->
     checkConfig msg
-    msg.reply "Typeform creation ..."
-    survey_link = msg.match[1]
+
+    if msg.match.length < 2
+      match_string = 'help'
+    else
+      match_string = msg.match[1]
+
+    command_opts = match_string.split(' ')
+    command = command_opts[0]
+    opt = command_opts[1]
+
+    if command == undefined
+      command = 'help'
+
+    for short_cut of COMMAND_SHORTCUT
+      if command == short_cut
+        command = COMMAND_SHORTCUT[short_cut]
+        break
+
+    switch command
+      when 'create'    then create msg, opt
+      when 'publish'   then publish msg, opt
+      when 'preview'   then preview msg, opt
+      when 'watch'     then watch msg, opt
+      else
+        help msg
+
+
+  help = (msg) ->
+    msg.send "Hello there. Welcome Typeform Hubot. *_*"
+    msg.send "I am still a young robot, please be nice to me."
+    msg.send "\n"
+    msg.send "Usage: typeform command <args>"
+    msg.send "\n"
+    msg.send "create\t<survey_link>\tCreate your own typeform"
+    msg.send "preview\t\t\tPreview your typeform link"
+    msg.send "publish\t<user_link>\tPublish your typeform to users"
+    msg.send "\n"
+
+  create = (msg, opt) ->
+    checkConfig msg
+    survey_link = opt
     user = msg.message.user
-    if survey_link.length == 0
+    if !survey_link or survey_link.length == 0
       msg.send "Command : typeform create <surveylink>."
       msg.send "You must provide a survey link."
       msg.send "If you do not know how to make one."
@@ -94,71 +170,36 @@ module.exports = (robot) ->
 
       msg.reply "Correct. I will create a new survey for you."
 
-      # Add webhook submit url field
-      survey['webhook_submit_url'] = STATISTICS_URL
-
       # create a typeform
       create_typeform survey, (data) ->
 
-        console.log(data)
+        # TODO analyze data details   webhook
         typeform_link = data.links.form_render.get
-        statistics_link = data.webhook_submit_url
 
         # Save into hubot brain
         formlist = jsonlint.parse(robot.brain.data[BRAIN_TYPEFORM_KEY])
 
-        formlist[user.name] = {
-          "typeform_link": typeform_link,
-          "statistics_link": statistics_link
-        }
+        # TODO change title to user.name
+        formlist[user.name] = typeform_link
         robot.brain.data[BRAIN_TYPEFORM_KEY] = JSON.stringify(formlist)
 
-        msg.reply "Ok. Survey creation finished."
-        msg.reply "To see typeform preview. Please click : #{typeform_link}"
-        msg.reply "To see survey statistics. Please click : #{statistics_link}"
+        msg.reply "Ok. Survey creation finished. You can access it through : #{typeform_link}"
 
-  robot.respond /typeform preview/i, (msg) ->
-
-    checkConfig msg
-    msg.reply "Typeform previewing ..."
-    user = msg.message.user
-    # Get from hubot brain
-    typeforms = jsonlint.parse(robot.brain.data[BRAIN_TYPEFORM_KEY])
-    if typeforms[user.name]
-      msg.reply "Please copy this link : #{typeforms[user.name]["typeform_link"]}"
-    else
-      msg.reply "Nope. Please create your own typeform."
-      msg.reply "Usage : create\t<survey_link>\tCreate your own typeform"
-
-  robot.respond /typeform watch/i, (msg) ->
-    checkConfig msg
-    msg.reply "Typeform watching ..."
-    user = msg.message.user
-    # Get from hubot brain
-    typeforms = jsonlint.parse(robot.brain.data[BRAIN_TYPEFORM_KEY])
-    if typeforms[user.name]
-      msg.reply "Please copy this link to watch current statistics : #{typeforms[user.name]["statistics_link"]}"
-    else
-      msg.reply "Nope. Please create your own typeform."
-      msg.reply "Usage : create\t<survey_link>\tCreate your own typeform"
-
-  robot.respond /typeform publish(.*)/i, (msg) ->
-
-    checkConfig msg
+  publish = (msg, opt) ->
     user = msg.message.user
     # TODO if has unpublished form
     forms = jsonlint.parse(robot.brain.data[BRAIN_TYPEFORM_KEY])
 
-    if not user.name of forms
+    if not (user.name of forms)
       msg.reply "Nope. Please create your own typeform."
       msg.reply "Usage : create\t<survey_link>\tCreate your own typeform"
       return
 
     form_link = forms[user.name]['typeform_link']
 
-    users_link = msg.match[1]
+    users_link = opt
 
-    if users_link.length == 0
+    if !users_link or users_link.length == 0
       msg.send "Command : typeform publish <userslink>."
       msg.send "You must provide a user list."
       msg.send "Please refer #{PASTE_URL}/seqiqikeje.avrasm for example."
@@ -183,91 +224,26 @@ module.exports = (robot) ->
               msg.reply "Get error #{error}"
             else
               robot.messageRoom jid, "Hi, #{user.name} create a survey for you #{form_link}"
-
-  robot.respond /typeform( help)?$/i, (msg) ->
-    checkConfig msg
-    msg.send "Hello there. Welcome Typeform Hubot. *_*"
-    msg.send "I am still a young robot, please be nice to me."
-    msg.send "\n"
-    msg.send "Usage: typeform command <args>"
-    msg.send "\n"
-    msg.send "create\t<survey_link>\tCreate your own typeform"
-    msg.send "preview\t\t\tPreview your typeform link"
-    msg.send "publish\t<user_link>\tPublish your typeform to users"
-    msg.send "\n"
     return
 
-  get_jid_of_hipchat_user = (rakuten_email, callback) ->
-    get_ex "#{HIPCHAT_API}/user/#{rakuten_email}?auth_token=#{HIPCHAT_TOKEN}", (error, result) ->
-      res_obj = jsonlint.parse(result)
-      if error == null
-        callback null, res_obj.xmpp_jid
-      else
-        callback error
+  preview = (msg, opt) ->
+    msg.reply "Typeform previewing ..."
+    user = msg.message.user
+    # Get from hubot brain
+    typeforms = jsonlint.parse(robot.brain.data[BRAIN_TYPEFORM_KEY])
+    if typeforms[user.name]
+      msg.reply "Please copy this link : #{typeforms[user.name]["typeform_link"]}"
+    else
+      msg.reply "Nope. Please create your own typeform."
+      msg.reply "Usage : create\t<survey_link>\tCreate your own typeform"
 
-
-  get_users = (link, callback) ->
-    get link, callback
-
-  get_survey = (link, callback) ->
-    get link, callback
-
-  create_typeform = (data, callback) ->
-    link = TYPEFORM_URL
-    ops = {
-      json: data,
-      headers: 'X-API-TOKEN': API_KEY
-    }
-    post link, ops, callback
-
-  # http get
-  get = (link, callback) ->
-    request link, (error, response, body) ->
-      callback(body)
-
-  # http post
-  post = (link, ops, callback) ->
-    request.post link, ops, (error, response, body) ->
-      callback(body)
-
-  # http get
-  get_ex = (link, callback) ->
-    request link, (error, response, body) ->
-      callback error, body
-
-  robot.hear /typeform( [^ ]*)?/i, (msg) ->
-    checkConfig msg
-
-    COMMAND_SHORTCUT
-
-
-    command = msg.match[1]
-    if command == undefined
-      command = 'help'
-    command = command.trim()
-
-    for short_cut of COMMAND_SHORTCUT
-      if command == short_cut
-        command = COMMAND_SHORTCUT[short_cut]
-        break
-
-    msg.send command
-    help msg if command == 'help'
-
-  help = (msg) ->
-    msg.send "Hello there. Welcome Typeform Hubot. *_*"
-    msg.send "I am still a young robot, please be nice to me."
-    msg.send "\n"
-    msg.send "Usage: typeform command <args>"
-    msg.send "\n"
-    msg.send "create\t<survey_link>\tCreate your own typeform"
-    msg.send "preview\t\t\tPreview your typeform link"
-    msg.send "publish\t<user_link>\tPublish your typeform to users"
-    msg.send "\n"
-    return
-  create = (msg) ->
-    return
-  public = (msg) ->
-    return
-  preview = (msg) ->
-    return
+  watch   = (msg, opt) ->
+    msg.reply "Typeform watching ..."
+    user = msg.message.user
+    # Get from hubot brain
+    typeforms = jsonlint.parse(robot.brain.data[BRAIN_TYPEFORM_KEY])
+    if typeforms[user.name]
+      msg.reply "Please copy this link to watch current statistics : #{typeforms[user.name]["statistics_link"]}"
+    else
+      msg.reply "Nope. Please create your own typeform."
+      msg.reply "Usage : create\t<survey_link>\tCreate your own typeform"
