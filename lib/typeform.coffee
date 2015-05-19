@@ -155,6 +155,19 @@ module.exports = (robot) ->
               msg.reply "Hi, #{user.name} create a survey for you #{jid} #{form_link}"
 #              robot.messageRoom jid, "Hi, #{user.name} create a survey for you #{form_link}"
 
+  robot.respond /typeform( help)?$/i, (msg) ->
+    checkConfig msg
+    msg.send "Hello there. Welcome Typeform Hubot. *_*"
+    msg.send "I am still a young robot, please be nice to me."
+    msg.send "\n"
+    msg.send "Usage: typeform command <args>"
+    msg.send "\n"
+    msg.send "create\t<survey_link>\tCreate your own typeform"
+    msg.send "preview\t\t\tPreview your typeform link"
+    msg.send "publish\t<user_link>\tPublish your typeform to users"
+    msg.send "\n"
+    return
+
   get_jid_of_hipchat_user = (rakuten_email, callback) ->
     get_ex "#{HIPCHAT_API}/user/#{rakuten_email}?auth_token=#{HIPCHAT_TOKEN}", (error, result) ->
       res_obj = jsonlint.parse(result)
