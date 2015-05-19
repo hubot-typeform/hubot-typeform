@@ -54,6 +54,8 @@ module.exports = (robot) ->
       msg.send "Please refer #{PASTE_URL}/mumihocima.json"
       return
 
+    # TODO Check if user_link
+
     # Handle survey link 
     # Maybe a full link, maybe a short name
     # For example
@@ -70,21 +72,6 @@ module.exports = (robot) ->
 
         # Check if it is a json data
         survey = jsonlint.parse(data)
-
-        msg.reply "Correct. I will create a new survey for you."
-
-        # create a typeform
-        create_typeform survey, (data) ->
-
-          typeform_link = data.links.form_render.get
-
-          # Save into hubot brain
-          formlist = jsonlint.parse(robot.brain.data[BRAIN_TYPEFORM_KEY])
-          formlist[data.title] = typeform_link
-          robot.brain.data[BRAIN_TYPEFORM_KEY] = JSON.stringify(formlist)
-
-          msg.reply "Ok. Survey creation finished. You can access it through : #{typeform_link}"
-
       catch e
         msg.send "The survey data you provided is not correct."
         msg.send "Content is :"
@@ -92,19 +79,36 @@ module.exports = (robot) ->
         msg.send data
         msg.send "--------------------"
         msg.send e
-        process.exit()
+        return
+
+      msg.reply "Correct. I will create a new survey for you."
+
+      # create a typeform
+      create_typeform survey, (data) ->
+
+        # TODO analyze data details   webhook
+        typeform_link = data.links.form_render.get
+
+        # Save into hubot brain
+        formlist = jsonlint.parse(robot.brain.data[BRAIN_TYPEFORM_KEY])
+
+        # TODO change title to user.name
+        formlist[data.title] = typeform_link
+        robot.brain.data[BRAIN_TYPEFORM_KEY] = JSON.stringify(formlist)
+
+        msg.reply "Ok. Survey creation finished. You can access it through : #{typeform_link}"
 
 
-  robot.respond /typeform list/i, (msg) ->
+  robot.respond /typeform preivew/i, (msg) ->
     checkConfig msg
-    msg.reply "Command : typeform list"
+    msg.reply "Command : typeform preview"
 
     # Get from hubot brain
     typeforms = jsonlint.parse(robot.brain.data[BRAIN_TYPEFORM_KEY])
-    for key of typeforms
-      msg.reply "* #{key} - #{typeforms[key]}"
-    msg.reply "Done"
-    
+     if typeforms[user.name]
+       msg.reply "Please copy this link : #{typeforms[key]}"
+     else
+       msg.reply "Nope. Please create your own typeform."
 
   robot.respond /typeform publish(.*)/i, (msg) ->
     checkConfig msg
@@ -118,15 +122,15 @@ module.exports = (robot) ->
     msg.reply "Analynizing user list."
     # Handle survey data
     get_users users_link, (data) ->
-      try
 
-        # Check if it is a json data
-        users = jsonlint.parse(data)
+      # TODO specify '\n', ',' ';'
+      # Rejext any others and notify
+      users = data.split('\n')
 
-        msg.reply "Correct. I will publish the survey for you."
+      msg.reply "Correct. I will publish the survey for you."
 
-        # create rooms for users to take the survey
-        # TODO
+      # create rooms for users to take the survey
+      # TODO
 
 get_survey = (link, callback) ->
   get link, callback
