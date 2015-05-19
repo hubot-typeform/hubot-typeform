@@ -56,7 +56,7 @@ module.exports = (robot) ->
       msg.send "Command : typeform create <surveylink>."
       msg.send "You must provide a survey link."
       msg.send "If you do not know how to make one."
-      msg.send "Please refer #{PASTE_URL}/mumihocima.json for example."
+      msg.send "Please refer #{PASTE_URL}/araqawanah.json for example."
       return
 
     # TODO Check if user_link
