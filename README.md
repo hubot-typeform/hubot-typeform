@@ -41,12 +41,12 @@ API_KEY    - Typeform application key
 Manager> hubot typeform create <example_survey_link>
 Hubot> Analynizing survey data...
 Hubot> Correct. I will create a new survey for you.
-Hubot> Ok. Survey creation finished. You can access through : https://clongbupt.typeform.com/to/hV2Qni
+Hubot> Ok. Survey creation finished. You can access through : https://forms.typeform.io/to/ocuiuhR0zm_8pg 
 Manager> hubot typeform list
-Hubot> * <surveyname> - <surveylinke>
-Hubot> * <surveyname> - <surveylinke>
-Hubot> * <surveyname> - <surveylinke>
-user1> hubot publish <surveyname> <user_list_link>
+Hubot> * <surveyname> - <surveylink>
+Hubot> * <surveyname> - <surveylink>
+Hubot> * <surveyname> - <surveylink>
+Manager> hubot publish <surveyname> <user_list_link>
 Hubot> Analynizing user list...
 HUbot> Correct. <survey_name> publishing...
 Hubot> * <user_name> received
@@ -54,6 +54,8 @@ Hubot> * <user_name> received
 Hubot> * <user_name> received
 Hubot> * <user_name> received
 Hubot> Done
+Hubot> hubot typeform monit
+
 ```
 
 
