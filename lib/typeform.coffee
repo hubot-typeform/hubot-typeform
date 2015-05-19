@@ -51,7 +51,7 @@ module.exports = (robot) ->
       msg.send "Command : typeform create <surveylink>."
       msg.send "You must provide a survey link."
       msg.send "If you do not know how to make one."
-      msg.send "Please refer #{PASTE_URL}/mumihocima.json"
+      msg.send "Please refer #{PASTE_URL}/raw/mumihocima.json for example."
       return
 
     # TODO Check if user_link
@@ -69,7 +69,6 @@ module.exports = (robot) ->
     # Handle survey data
     get_survey survey_link, (data) ->
       try
-
         # Check if it is a json data
         survey = jsonlint.parse(data)
       catch e
@@ -100,6 +99,7 @@ module.exports = (robot) ->
 
 
   robot.respond /typeform preivew/i, (msg) ->
+      
     checkConfig msg
     msg.reply "Command : typeform preview"
 
@@ -112,14 +112,16 @@ module.exports = (robot) ->
 
   robot.respond /typeform publish(.*)/i, (msg) ->
     checkConfig msg
-    users_list = msg.match[1]
+    users_link = msg.match[1]
 
-    if user_list.length == 0
-      msg.send "Command : typeform publish <surveyname>."
-      msg.send "You must provide a survey name."
-      msg.send "Survey name can be found through typeform list command."
+    if users_link.length == 0
+      msg.send "Command : typeform publish <userslink>."
+      msg.send "You must provide a user list."
+      msg.send "Please refer #{PASTE_URL}/raw/seqiqikeje.avrasm for example."
+      return
 
-    msg.reply "Analynizing user list."
+    msg.reply "Analynizing user list..."
+
     # Handle survey data
     get_users users_link, (data) ->
 
@@ -131,6 +133,10 @@ module.exports = (robot) ->
 
       # create rooms for users to take the survey
       # TODO
+       
+
+get_users = (link, callback) ->
+  get link, callback
 
 get_survey = (link, callback) ->
   get link, callback
