@@ -23,7 +23,7 @@
 survey = {}
 users = {}
 
-command_map =
+COMMAND_SHORTCUT =
   'h': 'help'
   'c': 'create'
   'pub': 'public'
@@ -215,7 +215,7 @@ module.exports = (robot) ->
   robot.hear /typeform( [^ ]*)?/i, (msg) ->
     checkConfig msg
 
-    command_map
+    COMMAND_SHORTCUT
 
 
     command = msg.match[1]
@@ -223,9 +223,22 @@ module.exports = (robot) ->
       command = 'help'
     command = command.trim()
 
-    for short_cut of command_map
+    for short_cut of COMMAND_SHORTCUT
       if command == short_cut
-        command = command_map[short_cut]
+        command = COMMAND_SHORTCUT[short_cut]
         break
 
     msg.send command
+    help msg if command == 'help'
+
+  help = (msg) ->
+    msg.send "Hello there. Welcome Typeform Hubot. *_*"
+    msg.send "I am still a young robot, please be nice to me."
+    msg.send "\n"
+    msg.send "Usage: typeform command <args>"
+    msg.send "\n"
+    msg.send "create\t<survey_link>\tCreate your own typeform"
+    msg.send "preview\t\t\tPreview your typeform link"
+    msg.send "publish\t<user_link>\tPublish your typeform to users"
+    msg.send "\n"
+    return
