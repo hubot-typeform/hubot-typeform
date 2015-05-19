@@ -56,7 +56,7 @@ module.exports = (robot) ->
 
     # TODO Check if user_link
 
-    # Handle survey link 
+    # Handle survey link
     # Maybe a full link, maybe a short name
     # For example
     # Correct : https://paste.dev-jpe1.rakuten.rpaas.net/raw/mumihocima.json
@@ -98,17 +98,17 @@ module.exports = (robot) ->
         msg.reply "Ok. Survey creation finished. You can access it through : #{typeform_link}"
 
 
-  robot.respond /typeform preivew/i, (msg) ->
+  robot.respond /typeform preview/i, (msg) ->
       
     checkConfig msg
     msg.reply "Command : typeform preview"
 
     # Get from hubot brain
     typeforms = jsonlint.parse(robot.brain.data[BRAIN_TYPEFORM_KEY])
-     if typeforms[user.name]
-       msg.reply "Please copy this link : #{typeforms[key]}"
-     else
-       msg.reply "Nope. Please create your own typeform."
+    if typeforms[user.name]
+      msg.reply "Please copy this link : #{typeforms[key]}"
+    else
+      msg.reply "Nope. Please create your own typeform."
 
   robot.respond /typeform publish(.*)/i, (msg) ->
     checkConfig msg
@@ -133,7 +133,19 @@ module.exports = (robot) ->
 
       # create rooms for users to take the survey
       # TODO
-       
+
+  robot.respond /typeform( help)?$/i, (msg) ->
+    checkConfig msg
+    msg.send "Hello there. Welcome Typeform Hubot. *_*"
+    msg.send "I am still a young robot, please be nice to me."
+    msg.send "\n"
+    msg.send "Usage: typeform command <args>"
+    msg.send "\n"
+    msg.send "create\t<survey_link>\tCreate your own typeform"
+    msg.send "preview\t\t\tPreview your typeform link"
+    msg.send "publish\t<user_link>\tPublish your typeform to users"
+    msg.send "\n"
+    return
 
 get_users = (link, callback) ->
   get link, callback
