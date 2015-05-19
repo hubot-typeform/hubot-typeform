@@ -51,7 +51,7 @@ module.exports = (robot) ->
       msg.send "Command : typeform create <surveylink>."
       msg.send "You must provide a survey link."
       msg.send "If you do not know how to make one."
-      msg.send "Please refer #{PASTE_URL}/mumihocima.json"
+      msg.send "Please refer #{PASTE_URL}/raw/mumihocima.json for example."
       return
 
     # Handle survey link 
@@ -67,24 +67,8 @@ module.exports = (robot) ->
     # Handle survey data
     get_survey survey_link, (data) ->
       try
-
         # Check if it is a json data
         survey = jsonlint.parse(data)
-
-        msg.reply "Correct. I will create a new survey for you."
-
-        # create a typeform
-        create_typeform survey, (data) ->
-
-          typeform_link = data.links.form_render.get
-
-          # Save into hubot brain
-          formlist = jsonlint.parse(robot.brain.data[BRAIN_TYPEFORM_KEY])
-          formlist[data.title] = typeform_link
-          robot.brain.data[BRAIN_TYPEFORM_KEY] = JSON.stringify(formlist)
-
-          msg.reply "Ok. Survey creation finished. You can access it through : #{typeform_link}"
-
       catch e
         msg.send "The survey data you provided is not correct."
         msg.send "Content is :"
@@ -92,9 +76,23 @@ module.exports = (robot) ->
         msg.send data
         msg.send "--------------------"
         msg.send e
-        process.exit()
+        return
 
+      msg.reply "Correct. I will create a new survey for you."
 
+      # create a typeform
+      create_typeform survey, (data) ->
+
+        typeform_link = data.links.form_render.get
+
+        # Save into hubot brain
+        formlist = jsonlint.parse(robot.brain.data[BRAIN_TYPEFORM_KEY])
+        formlist[data.title] = typeform_link
+        robot.brain.data[BRAIN_TYPEFORM_KEY] = JSON.stringify(formlist)
+
+        msg.reply "Ok. Survey creation finished. You can access it through : #{typeform_link}"
+
+      
   robot.respond /typeform list/i, (msg) ->
     checkConfig msg
     msg.reply "Command : typeform list"
@@ -104,29 +102,32 @@ module.exports = (robot) ->
     for key of typeforms
       msg.reply "* #{key} - #{typeforms[key]}"
     msg.reply "Done"
-    
 
   robot.respond /typeform publish(.*)/i, (msg) ->
     checkConfig msg
-    users_list = msg.match[1]
+    users_link = msg.match[1]
 
-    if user_list.length == 0
-      msg.send "Command : typeform publish <surveyname>."
-      msg.send "You must provide a survey name."
-      msg.send "Survey name can be found through typeform list command."
+    if users_link.length == 0
+      msg.send "Command : typeform publish <userslink>."
+      msg.send "You must provide a user list."
+      msg.send "Please refer #{PASTE_URL}/raw/seqiqikeje.avrasm for example."
+      return
 
-    msg.reply "Analynizing user list."
+    msg.reply "Analynizing user list..."
+
     # Handle survey data
     get_users users_link, (data) ->
-      try
+      # Use lines string
+      # TODO Should know separate by ',' ';' '\n' 
+      lines = data.split('\n')
 
-        # Check if it is a json data
-        users = jsonlint.parse(data)
+      msg.reply "Correct. I will publish the survey for you."
 
-        msg.reply "Correct. I will publish the survey for you."
+      # create rooms for users to take the survey
+       
 
-        # create rooms for users to take the survey
-        # TODO
+get_users = (link, callback) ->
+  get link, callback
 
 get_survey = (link, callback) ->
   get link, callback
