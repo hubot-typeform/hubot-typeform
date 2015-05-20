@@ -257,14 +257,7 @@ module.exports = (robot) ->
       msg.reply "Usage : create\t<survey_link>\tCreate your own typeform"
 
   watch   = (msg, opt) ->
-    msg.reply "Typeform watching ..."
-    user = msg.message.user
-    # Get from hubot brain
-    typeforms = jsonlint.parse(robot.brain.data[BRAIN_TYPEFORM_KEY])
-    if typeforms[user.name]
-      msg.reply "Please copy this link to watch current statistics : #{typeforms[user.name]["statistics_link"]}"
-      uid = typeforms[user.name]["uid"]
-
+    watchForm = (uid, msg) ->
       get_answer_count uid, (error, count) ->
         if error == null
           if not ('count' of typeforms[user.name])
@@ -272,7 +265,18 @@ module.exports = (robot) ->
           pre_count = typeforms[user.name]['count']
           if count > pre_count
             msg.send "Got #{count - pre_count} new answer(s)."
-            typeforms[user.name]['count'] = count
+          typeforms[user.name]['count'] = count
+        return
+
+    msg.reply "Typeform watching ..."
+    user = msg.message.user
+    # Get from hubot brain
+    typeforms = jsonlint.parse(robot.brain.data[BRAIN_TYPEFORM_KEY])
+    if typeforms[user.name]
+      msg.reply "Please copy this link to watch current statistics : #{typeforms[user.name]["statistics_link"]}"
+      uid = typeforms[user.name]["uid"]
+      setInterval watchForm, 1000
+
     else
       msg.reply "Nope. Please create your own typeform."
       msg.reply "Usage : create\t<survey_link>\tCreate your own typeform"
