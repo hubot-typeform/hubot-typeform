@@ -133,12 +133,16 @@ module.exports = (robot) ->
     msg.send "Hello there. Welcome Typeform Hubot. *_*"
     msg.send "I am still a young robot, please be nice to me."
     msg.send "\n"
-    msg.send "Usage: typeform command <args>"
+    msg.send "Usage: typeform | /tf command <args>"
+    msg.send "/tf is short for typeform"
     msg.send "\n"
-    msg.send "create\t<survey_link>\tCreate your own typeform"
-    msg.send "preview\t\t\tPreview your typeform link"
-    msg.send "publish\t<user_link>\tPublish your typeform to users"
+    msg.send "create | c\t<surveylink>\tCreate your own typeform. c is short for create"
+    msg.send "preview | pre\t\t\tPreview your typeform link. pre is short for preview"
+    msg.send "publish | pub\t<userlink>\tPublish your typeform to users. pub is short for publish"
     msg.send "\n"
+    msg.send "Typeform : Ask awesomely."
+    msg.send "Typeform is a service aims to help users create attractive online forms and surveys that people will be encouraged to answer."
+    msg.send "Take a tour : https://forms.typeform.io/to/ihTVhvReksgW9w"
 
   create = (msg, opt) ->
     checkConfig msg
@@ -148,7 +152,8 @@ module.exports = (robot) ->
       msg.send "Command : typeform create <surveylink>."
       msg.send "You must provide a survey link."
       msg.send "If you do not know how to make one."
-      msg.send "Please refer #{PASTE_URL}/araqawanah.json for example."
+      msg.send "Please refer example : #{PASTE_URL}/araqawanah.json"
+      msg.send "What's inside json? Please refer : http://docs.typeform.io/v0.2/docs/introduction"
       return
 
     if not validateURL survey_link
@@ -184,20 +189,31 @@ module.exports = (robot) ->
 
       msg.reply "Correct. I will create a new survey for you."
 
+      # Add webhook submit url field
+      survey['webhook_submit_url'] = STATISTICS_URL
+
       # create a typeform
       create_typeform survey, (data) ->
 
         # TODO analyze data details   webhook
         typeform_link = data.links.form_render.get
+        statistics_link = data.webhook_submit_url
+        uid = data.id
 
         # Save into hubot brain
         formlist = jsonlint.parse(robot.brain.data[BRAIN_TYPEFORM_KEY])
 
         # TODO change title to user.name
-        formlist[user.name] = typeform_link
+        formlist[user.name] = {
+          "typeform_link": typeform_link,
+          "statistics_link": statistics_link,
+          "uid": uid
+        }
         robot.brain.data[BRAIN_TYPEFORM_KEY] = JSON.stringify(formlist)
 
-        msg.reply "Ok. Survey creation finished. You can access it through : #{typeform_link}"
+        msg.reply "Ok. Survey creation finished."
+        msg.reply "To see typeform preview. Please click : #{typeform_link}"
+        msg.reply "To see survey statistics. Please click : #{statistics_link}"
 
   publish = (msg, opt) ->
     user = msg.message.user
@@ -206,7 +222,7 @@ module.exports = (robot) ->
 
     if not (user.name of forms)
       msg.reply "Nope. Please create your own typeform."
-      msg.reply "Usage : create\t<survey_link>\tCreate your own typeform"
+      msg.reply "Usage : typeform create <surveylink> Create your own typeform"
       return
 
     form_link = forms[user.name]['typeform_link']
@@ -216,7 +232,7 @@ module.exports = (robot) ->
     if !users_link or users_link.length == 0
       msg.send "Command : typeform publish <userslink>."
       msg.send "You must provide a user list."
-      msg.send "Please refer #{PASTE_URL}/seqiqikeje.avrasm for example."
+      msg.send "Please refer example : #{PASTE_URL}/seqiqikeje.list"
       return
 
     if not validateURL users_link
@@ -254,7 +270,7 @@ module.exports = (robot) ->
       msg.reply "Please copy this link : #{typeforms[user.name]["typeform_link"]}"
     else
       msg.reply "Nope. Please create your own typeform."
-      msg.reply "Usage : create\t<survey_link>\tCreate your own typeform"
+      msg.reply "Command : typeform create <survey_link>."
 
   watch   = (msg, opt) ->
     msg.reply "Typeform watching ..."
@@ -281,7 +297,7 @@ module.exports = (robot) ->
 
     else
       msg.reply "Nope. Please create your own typeform."
-      msg.reply "Usage : create\t<survey_link>\tCreate your own typeform"
+      msg.reply "Command : create <survey_link>."
 
 
 validateURL = (textval) ->
