@@ -41,6 +41,8 @@ BRAIN_TYPEFORM_KEY = "typeform"
 HIPCHAT_API = "https://api.hipchat.com/v2"
 HIPCHAT_TOKEN = "roHqrGYG0klkFIqkOoAGZNlcxU2La8OACB4vIc08"
 
+COUNT_API = "http://128.199.175.201/api/hubot/"
+
 _ = require("underscore")
 request = require("request")
 jsonlint = require("jsonlint")
@@ -62,6 +64,16 @@ module.exports = (robot) ->
       else
         callback error
 
+  get_answer_count = (uid, callback) ->
+    get_ex "#{COUNT_API}", (error, result) ->
+      res_obj = jsonlint.parse(result)
+      if error == null
+        if uid of res_obj
+          callback null, res_obj[uid].count
+        else
+          callback null, 0
+      else
+        callback error
   get_users = (link, callback) ->
     get link, callback
 
@@ -197,7 +209,8 @@ module.exports = (robot) ->
         formlist[user.name] = {
           "typeform_link": typeform_link,
           "statistics_link": statistics_link,
-          "uid": uid
+          "uid": uid,
+          "count": 0
         }
         robot.brain.data[BRAIN_TYPEFORM_KEY] = JSON.stringify(formlist)
 
@@ -269,6 +282,19 @@ module.exports = (robot) ->
     typeforms = jsonlint.parse(robot.brain.data[BRAIN_TYPEFORM_KEY])
     if typeforms[user.name]
       msg.reply "Please copy this link to watch current statistics : #{typeforms[user.name]["statistics_link"]}"
+      uid = typeforms[user.name]["uid"]
+      setInterval (->
+        typeforms = jsonlint.parse(robot.brain.data[BRAIN_TYPEFORM_KEY])
+        get_answer_count uid, (error, count) ->
+          if error == null
+            pre_count = typeforms[user.name]['count']
+            if count > pre_count
+              msg.reply "Got #{count - pre_count} new answer(s)."
+              typeforms[user.name]['count'] = count
+              robot.brain.data[BRAIN_TYPEFORM_KEY] = JSON.stringify(typeforms)
+        return
+      ), 2000
+
     else
       msg.reply "Nope. Please create your own typeform."
       msg.reply "Command : create <survey_link>."
