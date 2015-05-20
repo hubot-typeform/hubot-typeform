@@ -41,6 +41,8 @@ BRAIN_TYPEFORM_KEY = "typeform"
 HIPCHAT_API = "https://api.hipchat.com/v2"
 HIPCHAT_TOKEN = "roHqrGYG0klkFIqkOoAGZNlcxU2La8OACB4vIc08"
 
+COUNT_API = "http://128.199.175.201/api/hubot/"
+
 _ = require("underscore")
 request = require("request")
 jsonlint = require("jsonlint")
@@ -59,6 +61,14 @@ module.exports = (robot) ->
       res_obj = jsonlint.parse(result)
       if error == null
         callback null, res_obj.xmpp_jid
+      else
+        callback error
+
+  get_answer_count = (uid, callback) ->
+    get_ex "#{COUNT_API}", (error, result) ->
+      res_obj = jsonlint.parse(result)
+      if error == null
+        callback null, res_obj.uid.count
       else
         callback error
 
@@ -253,6 +263,16 @@ module.exports = (robot) ->
     typeforms = jsonlint.parse(robot.brain.data[BRAIN_TYPEFORM_KEY])
     if typeforms[user.name]
       msg.reply "Please copy this link to watch current statistics : #{typeforms[user.name]["statistics_link"]}"
+      uid = typeforms[user.name]["uid"]
+
+      get_answer_count uid, (error, count) ->
+        if error == null
+          if not ('count' of typeforms[user.name])
+            typeforms[user.name]['count'] = 0
+          pre_count = typeforms[user.name]['count']
+          if count > pre_count
+            msg.send "Got #{count - pre_count} new answer(s)."
+            typeforms[user.name]['count'] = count
     else
       msg.reply "Nope. Please create your own typeform."
       msg.reply "Usage : create\t<survey_link>\tCreate your own typeform"
